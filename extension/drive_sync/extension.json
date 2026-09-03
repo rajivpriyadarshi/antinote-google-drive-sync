@@ -1,0 +1,26 @@
+{
+  "name": "drive_sync",
+  "version": "1.1.1",
+  "author": "rajivpriyadarshi",
+  "description": "Back up the current Antinote note as Markdown to a chosen Google Drive folder.",
+  "license": "MIT",
+  "category": "Productivity",
+  "dataScope": "full",
+  "endpoints": [
+    "http://127.0.0.1:48731"
+  ],
+  "requiredAPIKeys": [],
+  "commands": [
+    {
+      "name": "drive_sync",
+      "description": "Upload or update the current note in Google Drive.",
+      "type": "replaceAll"
+    },
+    {
+      "name": "drive_setup",
+      "description": "Open Google Drive Sync setup and folder settings.",
+      "type": "openURL"
+    }
+  ],
+  "official": false
+}
