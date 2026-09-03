@@ -114,23 +114,270 @@ function escapeHTML(value) {
   });
 }
 
+function displayPath(value) {
+  const home = os.homedir();
+  const shortened = value === home ? "~" : value.startsWith(home + path.sep) ? "~" + value.slice(home.length) : value;
+  return shortened.replace(/^~\/Library\/CloudStorage\/GoogleDrive-[^/]+\/My Drive/, "Google Drive");
+}
+
 function page(message) {
   const config = loadConfig();
   const roots = googleDriveRoots();
   const configured = isInsideGoogleDrive(config.folderPath);
   const status = configured ? "Ready to sync" : roots.length ? "Choose a folder to continue" : "Google Drive for desktop not found";
   const detail = configured
-    ? config.folderPath
+    ? displayPath(config.folderPath)
     : roots.length ? "Your Google Drive account is available." : "Install Google Drive for desktop and sign in, then refresh this page.";
+  const action = roots.length
+    ? "<a class='button' href='/choose-folder'>" + (configured ? "Change folder" : "Choose Google Drive folder") + "</a>"
+    : "<a class='button' href='https://www.google.com/drive/download/'>Install Google Drive</a>";
 
-  return "<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
-    "<title>Antinote Drive Sync</title><style>:root{color-scheme:light}*{box-sizing:border-box}body{font:16px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;background:#f4f1e8;color:#20221e;margin:0}main{max-width:700px;margin:9vh auto;padding:32px}h1{font-size:44px;letter-spacing:-2px;line-height:1.05;margin:0 0 12px}.lead{font-size:19px;color:#68685f}.panel{background:#fffdf7;border:1px solid #d8d2c3;border-radius:18px;padding:26px;margin-top:28px}.status{font-size:24px;font-weight:750;color:" + (configured ? "#1f6b45" : "#9b3c2d") + "}.path{padding:13px 15px;background:#efede5;border-radius:9px;overflow-wrap:anywhere}.button{display:inline-block;background:#1f5c45;color:white;border-radius:999px;padding:12px 19px;margin-top:18px;text-decoration:none;font-weight:700}.notice{background:#e7f3e8;border-radius:10px;padding:12px 14px}.muted{color:#68685f}@media(max-width:600px){main{margin:2vh auto;padding:22px}h1{font-size:36px}}</style></head><body><main>" +
-    "<h1>Antinote Drive Sync</h1><p class='lead'>Choose a folder once. Sync notes with <code>::drive_sync()</code>.</p>" +
-    (message ? "<p class='notice'>" + escapeHTML(message) + "</p>" : "") +
-    "<section class='panel'><div class='status'>" + escapeHTML(status) + "</div><p class='path'>" + escapeHTML(detail) + "</p>" +
-    (roots.length ? "<a class='button' href='/choose-folder'>" + (configured ? "Change folder" : "Choose Google Drive folder") + "</a>" : "<a class='button' href='https://www.google.com/drive/download/'>Install Google Drive</a>") +
-    "<p class='muted'>No Google Cloud project, OAuth client ID, or client secret is needed. Files are written locally and Google Drive syncs them normally.</p></section>" +
-    "</main></body></html>";
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Antinote Drive Sync</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f3ee;
+      --ink: #171717;
+      --note: #1a1a1a;
+      --note-edge: #343434;
+      --muted: #929292;
+      --mint: #39eba6;
+      --orange: #d93900;
+      --grid: rgba(23, 23, 23, .055);
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+      background-color: var(--paper);
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    main {
+      width: min(920px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: clamp(40px, 8vh, 88px) 0 56px;
+    }
+    .masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .16em;
+    }
+    .mark {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: var(--mint);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.48);
+    }
+    .mark::before {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 9px;
+      top: 9px;
+      border: 2px solid rgba(255,255,255,.75);
+      border-radius: 50%;
+    }
+    .mark::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      right: -2px;
+      bottom: -4px;
+      border: 3px solid rgba(255,255,255,.72);
+      border-radius: 7px;
+      transform: rotate(45deg);
+    }
+    .local-pill {
+      padding: 7px 10px 6px;
+      border: 1px solid rgba(23,23,23,.2);
+      border-radius: 999px;
+      font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .intro { max-width: 720px; margin-bottom: 34px; }
+    h1 {
+      margin: 0;
+      font-size: clamp(43px, 7vw, 72px);
+      font-weight: 800;
+      letter-spacing: -.065em;
+      line-height: .96;
+    }
+    .lead {
+      margin: 18px 0 0;
+      color: #5e5e59;
+      font-size: clamp(18px, 2.5vw, 23px);
+      letter-spacing: -.025em;
+    }
+    code, .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { color: var(--orange); font-size: .9em; font-weight: 700; }
+    .note {
+      position: relative;
+      overflow: hidden;
+      min-height: 430px;
+      padding: 30px clamp(25px, 5vw, 54px) 38px;
+      color: #f7f7f4;
+      background: var(--note);
+      border: 1px solid var(--note-edge);
+      border-radius: 22px;
+      box-shadow: 0 24px 70px rgba(23,23,23,.18), 0 2px 4px rgba(23,23,23,.18);
+    }
+    .note::after {
+      content: "";
+      position: absolute;
+      top: 22px;
+      right: 7px;
+      width: 4px;
+      height: 76px;
+      border-radius: 99px;
+      background: var(--orange);
+    }
+    .window-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #303030;
+      color: #757575;
+      font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .dots { display: flex; gap: 7px; }
+    .dots i { width: 8px; height: 8px; border-radius: 50%; background: #3b3b3b; }
+    .dots i:first-child { background: var(--orange); }
+    .notice {
+      margin: 24px 0 0;
+      padding: 13px 16px;
+      border: 1px solid rgba(57,235,166,.32);
+      border-radius: 10px;
+      color: var(--mint);
+      background: rgba(57,235,166,.08);
+      font: 600 14px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: ${configured ? "var(--mint)" : "var(--orange)"};
+      box-shadow: 0 0 0 5px ${configured ? "rgba(57,235,166,.11)" : "rgba(217,57,0,.14)"};
+    }
+    .status {
+      color: ${configured ? "var(--mint)" : "#ff7043"};
+      font: 650 clamp(20px, 3vw, 27px)/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: -.035em;
+    }
+    .path {
+      margin: 23px 0 0;
+      padding: 17px 18px;
+      overflow-wrap: anywhere;
+      border: 1px solid #353535;
+      border-radius: 11px;
+      color: #d9d9d3;
+      background: #222;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 28px;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 46px;
+      padding: 0 19px;
+      border-radius: 9px;
+      color: #10241d;
+      background: var(--mint);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 800;
+      box-shadow: inset 0 -2px rgba(0,0,0,.13);
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+    .button::after { content: "↗"; margin-left: 10px; font-size: 17px; }
+    .button:hover { filter: brightness(1.06); transform: translateY(-2px); }
+    .button:active { transform: translateY(0); }
+    .privacy { color: #777; font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin-top: 24px;
+      color: #74746e;
+      font-size: 13px;
+    }
+    .footer strong { color: #41413d; }
+    @media (max-width: 620px) {
+      main { width: calc(100% - 24px); padding-top: 24px; }
+      .masthead { margin-bottom: 38px; }
+      .local-pill { display: none; }
+      .note { width: 100%; min-width: 0; min-height: 0; padding: 22px 20px 28px; border-radius: 18px; }
+      .actions, .footer { align-items: flex-start; flex-direction: column; }
+      .actions { min-width: 0; }
+      .button { width: auto; max-width: 100%; }
+      .privacy { overflow-wrap: anywhere; }
+    }
+    @media (prefers-reduced-motion: reduce) { .button { transition: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="masthead">
+      <div class="brand"><span class="mark" aria-hidden="true"></span><span>ANTINOTE / DRIVE</span></div>
+      <span class="local-pill">Local companion</span>
+    </header>
+    <section class="intro">
+      <h1>Your notes.<br>Now with a way out.</h1>
+      <p class="lead">Pick a folder once. Send the current note with <code>::drive_sync()</code>.</p>
+    </section>
+    <section class="note">
+      <div class="window-bar"><span>Google Drive</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+      ${message ? "<p class='notice'>" + escapeHTML(message) + "</p>" : ""}
+      <div class="status-row"><span class="status-dot" aria-hidden="true"></span><div class="status">${escapeHTML(status)}</div></div>
+      <p class="path">${escapeHTML(detail)}</p>
+      <div class="actions">${action}<span class="privacy">no account · no oauth · stays local</span></div>
+    </section>
+    <footer class="footer"><span><strong>Plain text in.</strong> Markdown out.</span><span>Google Drive handles the rest.</span></footer>
+  </main>
+</body>
+</html>`;
 }
 
 function readBody(request, limit) {

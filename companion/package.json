@@ -1,6 +1,6 @@
 {
   "name": "antinote-google-drive-sync-companion",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "Local Google Drive folder bridge for the Antinote Drive Sync extension",
   "main": "server.js",
